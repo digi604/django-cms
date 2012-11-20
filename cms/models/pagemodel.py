@@ -37,6 +37,9 @@ class Page(MPTTModel):
     PUBLISHER_STATE_DELETE = 2
     # Page was marked published, but some of page parents are not.
     PUBLISHER_STATE_PENDING = 4
+    # Page gets locked during publishing
+    PUBLISHER_STATE_LOCKED = 1
+
 
     template_choices = [(x, _(y)) for x, y in settings.CMS_TEMPLATES]
 
@@ -71,7 +74,7 @@ class Page(MPTTModel):
     moderator_state = models.SmallIntegerField(_('moderator state'), default=0, blank=True, editable=False)
     publisher_is_draft = models.BooleanField(default=1, editable=False, db_index=True)
     #This is misnamed - the one-to-one relation is populated on both ends
-    publisher_public = models.OneToOneField('self', related_name='publisher_draft',  null=True, editable=False)
+    publisher_public = models.OneToOneField('self', related_name='publisher_draft', null=True, editable=False)
     publisher_state = models.SmallIntegerField(default=0, editable=False, db_index=True)
 
     # Managers
@@ -133,7 +136,7 @@ class Page(MPTTModel):
         import cms.signals as cms_signals
         cms_signals.page_moved.send(sender=Page, instance=self)  # titles get saved before moderation
         self.save()  # always save the page after move, because of publisher
-        moderator.page_changed(self, force_moderation_action = PageModeratorState.ACTION_MOVE)
+        moderator.page_changed(self, force_moderation_action=PageModeratorState.ACTION_MOVE)
         # check the slugs
         page_utils.check_title_slugs(self)
 
@@ -303,8 +306,8 @@ class Page(MPTTModel):
 
                 # create slug-copy for standard copy
                 if not public_copy:
-                    title.save() # We need to save the title in order to
-                                 # retrieve it in get_available_slug
+                    title.save()# We need to save the title in order to
+                                # retrieve it in get_available_slug
                     title.slug = page_utils.get_available_slug(title)
                 title.save()
 
@@ -391,8 +394,13 @@ class Page(MPTTModel):
         # publish, but only if all parents are published!!
         published = None
 
+        if self.moderator_state == self.PUBLISHER_STATE_LOCKED:
+            return False
+
+
         if not self.pk:
             self.save()
+        Page.objects.filter(pk=self.pk).update(moderator_state=self.PUBLISHER_STATE_LOCKED)
         if self._publisher_can_publish():
             ########################################################################
             # Assign the existing public page in old_public and mark it as
@@ -468,7 +476,7 @@ class Page(MPTTModel):
         publish_set = self.get_descendants().filter(published=True)
         for page in publish_set:
             if page.publisher_public:
-               if page.publisher_public.parent.published:
+                if page.publisher_public.parent.published:
                     page.publisher_public.published = True
                     page.publisher_public.save()
                     if page.publisher_state == Page.PUBLISHER_STATE_PENDING:
@@ -478,6 +486,7 @@ class Page(MPTTModel):
             elif page.publisher_state == Page.PUBLISHER_STATE_PENDING:
                 page.publish()
 
+        Page.objects.filter(pk=self.pk).update(moderator_state=0)
         # fire signal after publishing is done
         import cms.signals as cms_signals
         cms_signals.post_publish.send(sender=Page, instance=self)

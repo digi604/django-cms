@@ -16,7 +16,7 @@ class PublisherCommandTests(TestCase):
     """
     Tests for the publish command
     """
-    
+
     def test_command_line_should_raise_without_superuser(self):
         raised = False
         try:
@@ -29,24 +29,24 @@ class PublisherCommandTests(TestCase):
     def test_command_line_publishes_zero_pages_on_empty_db(self):
         # we need to create a superuser (the db is empty)
         User.objects.create_superuser('djangocms', 'cms@example.com', '123456')
-        
+
         pages_from_output = 0
         published_from_output = 0
-        
+
         with StdoutOverride() as buffer:
             # Now we don't expect it to raise, but we need to redirect IO
             com = publisher_publish.Command()
             com.handle_noargs()
             lines = buffer.getvalue().split('\n') #NB: readlines() doesn't work
-            
+
         for line in lines:
             if 'Total' in line:
                 pages_from_output = int(line.split(':')[1])
             elif 'Published' in line:
                 published_from_output = int(line.split(':')[1])
-                
-        self.assertEqual(pages_from_output,0)
-        self.assertEqual(published_from_output,0)
+
+        self.assertEqual(pages_from_output, 0)
+        self.assertEqual(published_from_output, 0)
 
     def test_command_line_ignores_draft_page(self):
         # we need to create a superuser (the db is empty)
@@ -69,8 +69,8 @@ class PublisherCommandTests(TestCase):
             elif 'Published' in line:
                 published_from_output = int(line.split(':')[1])
 
-        self.assertEqual(pages_from_output,0)
-        self.assertEqual(published_from_output,0)
+        self.assertEqual(pages_from_output, 0)
+        self.assertEqual(published_from_output, 0)
 
         self.assertEqual(Page.objects.public().count(), 0)
 
@@ -86,36 +86,36 @@ class PublisherCommandTests(TestCase):
         """
         # we need to create a superuser (the db is empty)
         User.objects.create_superuser('djangocms', 'cms@example.com', '123456')
-        
+
         # Now, let's create a page. That actually creates 2 Page objects
         create_page("The page!", "nav_playground.html", "en", published=True)
         draft = Page.objects.drafts()[0]
         draft.reverse_id = 'a_test' # we have to change *something*
         draft.save()
-        
+
         pages_from_output = 0
         published_from_output = 0
-        
+
         with StdoutOverride() as buffer:
             # Now we don't expect it to raise, but we need to redirect IO
             com = publisher_publish.Command()
             com.handle_noargs()
             lines = buffer.getvalue().split('\n') #NB: readlines() doesn't work
-            
+
         for line in lines:
             if 'Total' in line:
                 pages_from_output = int(line.split(':')[1])
             elif 'Published' in line:
                 published_from_output = int(line.split(':')[1])
-                
-        self.assertEqual(pages_from_output,1)
-        self.assertEqual(published_from_output,1)
+
+        self.assertEqual(pages_from_output, 1)
+        self.assertEqual(published_from_output, 1)
         # Sanity check the database (we should have one draft and one public)
         not_drafts = len(Page.objects.filter(publisher_is_draft=False))
         drafts = len(Page.objects.filter(publisher_is_draft=True))
-        self.assertEquals(not_drafts,1)
-        self.assertEquals(drafts,1)
-        
+        self.assertEquals(not_drafts, 1)
+        self.assertEquals(drafts, 1)
+
         # Now check that the non-draft has the attribute we set to the draft.
         non_draft = Page.objects.public()[0]
         self.assertEquals(non_draft.reverse_id, 'a_test')
@@ -248,6 +248,7 @@ class PublishingTests(TestCase):
         home = self.create_page("Home", published=True, in_navigation=True)
         child = self.create_page("Child", published=True, parent=home,
                                  in_navigation=False)
+        self.assertFalse(child.publisher_state == 5)
         home.unpublish()
         child = self.reload(child)
         self.assertTrue(child.published)
@@ -257,7 +258,7 @@ class PublishingTests(TestCase):
 
         child.in_navigation = True
         child.save()
-        child.publish()
+        self.assertTrue(child.publish())
         child = self.reload(child)
 
         self.assertTrue(child.published)
@@ -443,12 +444,12 @@ class PublishingTests(TestCase):
         root = reverse('pages-root')
         self.assertEqual(home.get_absolute_url(), root)
         self.assertEqual(home.get_public_object().get_absolute_url(), root)
-        self.assertEqual(child.get_absolute_url(), root+'child/')
-        self.assertEqual(child.get_public_object().get_absolute_url(), root+'child/')
-        self.assertEqual(other.get_absolute_url(), root+'another-page/')
-        self.assertEqual(other.get_public_object().get_absolute_url(), root+'another-page/')
-        self.assertEqual(child2.get_absolute_url(), root+'another-page/child/')
-        self.assertEqual(child2.get_public_object().get_absolute_url(), root+'another-page/child/')
+        self.assertEqual(child.get_absolute_url(), root + 'child/')
+        self.assertEqual(child.get_public_object().get_absolute_url(), root + 'child/')
+        self.assertEqual(other.get_absolute_url(), root + 'another-page/')
+        self.assertEqual(other.get_public_object().get_absolute_url(), root + 'another-page/')
+        self.assertEqual(child2.get_absolute_url(), root + 'another-page/child/')
+        self.assertEqual(child2.get_public_object().get_absolute_url(), root + 'another-page/child/')
 
         home.unpublish()
         home = self.reload(home)
@@ -462,8 +463,8 @@ class PublishingTests(TestCase):
 
         self.assertEqual(other.get_absolute_url(), root)
         self.assertEqual(other.get_public_object().get_absolute_url(), root)
-        self.assertEqual(home.get_absolute_url(), root+'page/')
-        self.assertEqual(home.get_public_object().get_absolute_url(), root+'page/')
+        self.assertEqual(home.get_absolute_url(), root + 'page/')
+        self.assertEqual(home.get_public_object().get_absolute_url(), root + 'page/')
         # TODO: These assertions are failing
         #self.assertEqual(child.get_absolute_url(), root+'page/child/')
         #self.assertEqual(child.get_public_object().get_absolute_url(), root+'page/child/')
@@ -479,12 +480,12 @@ class PublishingTests(TestCase):
         self.assertTrue(home.publisher_public.is_home())
         self.assertEqual(home.get_absolute_url(), root)
         self.assertEqual(home.get_public_object().get_absolute_url(), root)
-        self.assertEqual(child.get_absolute_url(), root+'child/')
-        self.assertEqual(child.get_public_object().get_absolute_url(), root+'child/')
-        self.assertEqual(other.get_absolute_url(), root+'another-page/')
-        self.assertEqual(other.get_public_object().get_absolute_url(), root+'another-page/')
-        self.assertEqual(child2.get_absolute_url(), root+'another-page/child/')
-        self.assertEqual(child2.get_public_object().get_absolute_url(), root+'another-page/child/')
+        self.assertEqual(child.get_absolute_url(), root + 'child/')
+        self.assertEqual(child.get_public_object().get_absolute_url(), root + 'child/')
+        self.assertEqual(other.get_absolute_url(), root + 'another-page/')
+        self.assertEqual(other.get_public_object().get_absolute_url(), root + 'another-page/')
+        self.assertEqual(child2.get_absolute_url(), root + 'another-page/child/')
+        self.assertEqual(child2.get_public_object().get_absolute_url(), root + 'another-page/child/')
 
     def test_revert_contents(self):
         user = self.get_superuser()
@@ -558,7 +559,7 @@ class PublishingTests(TestCase):
         """
         home_page = create_page("home", "nav_playground.html", "en",
                                 published=True, in_navigation=False)
-            
+
         create_page("item1", "nav_playground.html", "en", parent=home_page,
                     published=True)
         item2 = create_page("item2", "nav_playground.html", "en", parent=home_page,
@@ -568,10 +569,10 @@ class PublishingTests(TestCase):
                     published=True)
         create_page("subitem2", "nav_playground.html", "en", parent=item2,
                     published=True)
-            
+
         not_drafts = list(Page.objects.filter(publisher_is_draft=False).order_by('lft'))
         drafts = list(Page.objects.filter(publisher_is_draft=True).order_by('lft'))
-        
+
         self.assertEquals(len(not_drafts), 5)
         self.assertEquals(len(drafts), 5)
 
@@ -598,10 +599,10 @@ class PublishingTests(TestCase):
 
         # Now call publish again. The structure should not change.
         item2.publish()
-            
+
         not_drafts = list(Page.objects.filter(publisher_is_draft=False).order_by('lft'))
         drafts = list(Page.objects.filter(publisher_is_draft=True).order_by('lft'))
-        
+
         self.assertEquals(len(not_drafts), 5)
         self.assertEquals(len(drafts), 5)
 
