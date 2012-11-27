@@ -76,7 +76,7 @@ def configure(**extra):
             'cms',
             'menus',
             'mptt',
-            'cms.plugins.text',
+            #'cms.plugins.text',
             'cms.plugins.picture',
             'cms.plugins.file',
             'cms.plugins.flash',
@@ -94,6 +94,8 @@ def configure(**extra):
             'cms.test_utils.project.pluginapp.plugins.extra_context',
             'cms.test_utils.project.fakemlng',
             'cms.test_utils.project.fileapp',
+            #'djangocms_column',
+            'djangocms_text_ckeditor',
             'south',
             'reversion',
             'sekizai',
@@ -185,10 +187,10 @@ def configure(**extra):
                 "name": "extra context"
             },
         },
-        CMS_SOFTROOT = True,
-        CMS_PERMISSION = True,
-        CMS_PUBLIC_FOR = 'all',
-        CMS_CACHE_DURATIONS = {
+        CMS_SOFTROOT=True,
+        CMS_PERMISSION=True,
+        CMS_PUBLIC_FOR='all',
+        CMS_CACHE_DURATIONS={
             'menus': 0,
             'content': 0,
             'permissions': 0,
