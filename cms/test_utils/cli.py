@@ -8,7 +8,16 @@ gettext = lambda s: s
 urlpatterns = []
 DJANGO_1_3 = LooseVersion(django.get_version()) < LooseVersion('1.4')
 
+configured = False
+
 def configure(**extra):
+
+    global configured
+    if configured:
+        return
+    else:
+        configured = True
+
     from django.conf import settings
     os.environ['DJANGO_SETTINGS_MODULE'] = 'cms.test_utils.cli'
     defaults = dict(
@@ -94,8 +103,9 @@ def configure(**extra):
             'cms.test_utils.project.pluginapp.plugins.extra_context',
             'cms.test_utils.project.fakemlng',
             'cms.test_utils.project.fileapp',
-            #'djangocms_column',
+            'djangocms_column',
             'djangocms_text_ckeditor',
+            'djangocms_link',
             'south',
             'reversion',
             'sekizai',
@@ -221,6 +231,7 @@ def configure(**extra):
     if DJANGO_1_3:
         defaults['INSTALLED_APPS'].append("i18nurls")
         defaults['MIDDLEWARE_CLASSES'][4] = 'i18nurls.middleware.LocaleMiddleware'
+        settings._wrapped = None
     else:
         from django.utils.functional import empty
         settings._wrapped = empty
