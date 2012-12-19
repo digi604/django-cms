@@ -42,23 +42,29 @@ def details(request, slug):
         if frontend_lang in page_languages:
             available_languages.append(frontend_lang)
     attrs = ''
+    edit = preview = draft = False
+    if request.user.is_staff:
+        edit = True
     if 'edit' in request.GET:
         attrs = '?edit=1'
+        edit = True
     elif 'preview' in request.GET:
         attrs = '?preview=1'
+        preview = True
         if 'draft' in request.GET:
             attrs += '&draft=1'
+            draft = True
     # Check that the language is in FRONTEND_LANGUAGES:
-    if not current_language in get_public_languages():
-        #are we on root?
+    if not current_language in get_public_languages() and not edit:
+        # are we on root?
         if not slug:
-            #redirect to supported language
+            # redirect to supported language
             languages = []
             for language in available_languages:
                 languages.append((language, language))
             if languages:
                 with SettingsOverride(LANGUAGES=languages, LANGUAGE_CODE=languages[0][0]):
-                    #get supported language
+                    # get supported language
                     new_language = translation.get_language_from_request(request)
                     with force_language(new_language):
                         pages_root = reverse('pages-root')
@@ -66,8 +72,10 @@ def details(request, slug):
             else:
                 _handle_no_page(request, slug)
         else:
+            if request.user.is_staff:
+                return HttpResponseRedirect("%s?edit" % reverse('pages-details-by-slug', args=[slug]))
             return _handle_no_page(request, slug)
-    if current_language not in available_languages:
+    if current_language not in available_languages and not edit:
         # If we didn't find the required page in the requested (current)
         # language, let's try to find a fallback
         found = False
@@ -132,7 +140,7 @@ def details(request, slug):
         return HttpResponseRedirect('%s?%s=%s' % tup)
 
     template_name = get_template_from_request(request, page, no_current_page=True)
-    # fill the context 
+    # fill the context
     context['lang'] = current_language
     context['current_page'] = page
     context['has_change_permissions'] = page.has_change_permission(request)

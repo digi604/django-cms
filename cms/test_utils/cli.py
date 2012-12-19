@@ -118,7 +118,7 @@ def configure(**extra):
                     'code':'de',
                     'name':gettext('German'),
                     'fallbacks':['fr', 'en'],
-                    'public':True,
+                    'public':False,
                 },
                 {
                     'code':'fr',
@@ -191,10 +191,10 @@ def configure(**extra):
                 "name": "extra context"
             },
         },
-        CMS_SOFTROOT = True,
-        CMS_PERMISSION = True,
-        CMS_PUBLIC_FOR = 'all',
-        CMS_CACHE_DURATIONS = {
+        CMS_SOFTROOT=True,
+        CMS_PERMISSION=True,
+        CMS_PUBLIC_FOR='all',
+        CMS_CACHE_DURATIONS={
             'menus': 0,
             'content': 0,
             'permissions': 0,

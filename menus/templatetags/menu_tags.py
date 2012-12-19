@@ -51,7 +51,7 @@ def cut_levels(nodes, from_level, to_level, extra_inactive, extra_active):
     final = []
     removed = []
     selected = None
-    for node in nodes: 
+    for node in nodes:
         if not hasattr(node, 'level'):
             # remove and ignore nodes that don't have level information
             remove(node, removed)
@@ -61,11 +61,11 @@ def cut_levels(nodes, from_level, to_level, extra_inactive, extra_active):
             final.append(node)
             node.parent = None
         if not node.ancestor and not node.selected and not node.descendant:
-            # cut inactive nodes to extra_inactive, but not of descendants of 
+            # cut inactive nodes to extra_inactive, but not of descendants of
             # the selected node
             cut_after(node, extra_inactive, removed)
         if node.level > to_level and node.parent:
-            # remove nodes that are too deep, but not nodes that are on 
+            # remove nodes that are too deep, but not nodes that are on
             # from_level (local root nodes)
             remove(node, removed)
         if node.selected:
@@ -101,7 +101,7 @@ class ShowMenu(InclusionTag):
     """
     name = 'show_menu'
     template = 'menu/dummy.html'
-    
+
     options = Options(
         IntegerArgument('from_level', default=0, required=False),
         IntegerArgument('to_level', default=100, required=False),
@@ -112,7 +112,7 @@ class ShowMenu(InclusionTag):
         StringArgument('root_id', default=None, required=False),
         Argument('next_page', default=None, required=False),
     )
-    
+
     def get_context(self, context, from_level, to_level, extra_inactive,
                     extra_active, template, namespace, root_id, next_page):
         try:
@@ -120,13 +120,13 @@ class ShowMenu(InclusionTag):
             request = context['request']
         except KeyError:
             return {'template': 'menu/empty.html'}
-        
+
         if next_page:
             children = next_page.children
-        else: 
-            #new menu... get all the data so we can save a lot of queries
+        else:
+            # new menu... get all the data so we can save a lot of queries
             nodes = menu_pool.get_nodes(request, namespace, root_id)
-            if root_id: # find the root id and cut the nodes
+            if root_id:  # find the root id and cut the nodes
                 id_nodes = menu_pool.get_nodes_by_attribute(nodes, "reverse_id", root_id)
                 if id_nodes:
                     node = id_nodes[0]
@@ -140,7 +140,7 @@ class ShowMenu(InclusionTag):
                     nodes = []
             children = cut_levels(nodes, from_level, to_level, extra_inactive, extra_active)
             children = menu_pool.apply_modifiers(children, request, namespace, root_id, post_cut=True)
-    
+
         try:
             context.update({'children':children,
                             'template':template,
@@ -178,12 +178,12 @@ class ShowSubMenu(InclusionTag):
     """
     name = 'show_sub_menu'
     template = 'menu/dummy.html'
-    
+
     options = Options(
         IntegerArgument('levels', default=100, required=False),
         Argument('template', default='menu/sub_menu.html', required=False),
     )
-    
+
     def get_context(self, context, levels, template):
         try:
             # If there's an exception (500), default context_processors may not be called.
@@ -207,7 +207,7 @@ class ShowSubMenu(InclusionTag):
             'extra_inactive':0,
             'extra_active':0
         })
-        return context        
+        return context
 register.tag(ShowSubMenu)
 
 
@@ -220,7 +220,7 @@ class ShowBreadcrumb(InclusionTag):
     """
     name = 'show_breadcrumb'
     template = 'menu/dummy.html'
-    
+
     options = Options(
         Argument('start_level', default=0, required=False),
         Argument('template', default='menu/breadcrumb.html', required=False),
@@ -296,7 +296,7 @@ class LanguageChooser(InclusionTag):
     """
     name = 'language_chooser'
     template = 'menu/dummy.html'
-    
+
     options = Options(
         Argument('template', default=NOT_PROVIDED, required=False),
         Argument('i18n_mode', default='raw', required=False),
@@ -321,8 +321,9 @@ class LanguageChooser(InclusionTag):
         current_lang = get_language()
         site = Site.objects.get_current()
         languages = []
+        edit = 'edit' in context['request'].GET and context['request'].user.is_staff
         for lang in get_language_objects(site.pk):
-            if lang.get('public', True):
+            if lang.get('public', True) or edit:
                 languages.append((lang['code'], marker(lang['name'], lang['code'])))
         context.update({
             'languages':languages,
@@ -341,11 +342,11 @@ class PageLanguageUrl(InclusionTag):
     """
     name = 'page_language_url'
     template = 'cms/content.html'
-    
+
     options = Options(
         Argument('lang'),
     )
-    
+
     def get_context(self, context, lang):
         try:
             # If there's an exception (500), default context_processors may not be called.
