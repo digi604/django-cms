@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from datetime import date
+from cms.models.managers import SubtypedManager
 
 from django.core.urlresolvers import reverse
+from django.db.models.fields.related import SingleRelatedObjectDescriptor
+from django.db.models.query import QuerySet
 from django.utils.safestring import mark_safe
 import os
 import warnings
@@ -24,6 +27,15 @@ class BoundRenderMeta(object):
         self.index = 0
         self.total = 1
         self.text_enabled = getattr(meta, 'text_enabled', False)
+
+
+
+
+class Subtyped(models.Model):
+    objects = SubtypedManager()
+
+    class Meta:
+        abstract = True
 
 
 class PluginModelBase(MPTTModelBase):
@@ -90,6 +102,8 @@ class CMSPlugin(MPTTModel):
     rght = models.PositiveIntegerField(db_index=True, editable=False)
     tree_id = models.PositiveIntegerField(db_index=True, editable=False)
     child_plugin_instances = None
+
+    objects = SubtypedManager()
 
     class Meta:
         app_label = 'cms'
@@ -277,7 +291,7 @@ class CMSPlugin(MPTTModel):
                 # going down; remove more items from plugin_trail
                 if level_difference < 0:
                     plugin_trail[:] = plugin_trail[:level_difference]
-                # assign new_plugin.parent
+                    # assign new_plugin.parent
             new_plugin.parent = plugin_trail[-1]
             # new_plugin becomes the last item in the tree for the next round
             plugin_trail.append(new_plugin)
@@ -366,11 +380,11 @@ class CMSPlugin(MPTTModel):
         breadcrumb = []
         if not self.parent_id:
             breadcrumb.append({'title': unicode(self.get_plugin_name()),
-            'url': unicode(reverse("admin:cms_page_edit_plugin", args=[self.pk]))})
+                'url': unicode(reverse("admin:cms_page_edit_plugin", args=[self.pk]))})
             return breadcrumb
         for parent in self.get_ancestors(False, True):
             breadcrumb.append({'title': unicode(parent.get_plugin_name()),
-            'url': unicode(reverse("admin:cms_page_edit_plugin", args=[parent.pk]))})
+                'url': unicode(reverse("admin:cms_page_edit_plugin", args=[parent.pk]))})
         return breadcrumb
 
     def get_breadcrumb_json(self):
