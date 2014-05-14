@@ -1,15 +1,15 @@
 ##########
 django CMS
 ##########
-.. image:: https://api.travis-ci.org/divio/django-cms.svg?branch=develop
+.. image:: https://api.travis-ci.org/divio/django-cms.svg?branch=develop?style=flat
     :target: http://travis-ci.org/divio/django-cms
-.. image:: https://pypip.in/v/django-cms/badge.svg
+.. image:: https://pypip.in/v/django-cms/badge.svg?style=flat
     :target: https://crate.io/packages/django-cms/
-.. image:: https://pypip.in/d/django-cms/badge.svg
+.. image:: https://pypip.in/d/django-cms/badge.svg?style=flat
     :target: https://crate.io/packages/django-cms/
-.. image:: https://pypip.in/wheel/django-cms/badge.svg
+.. image:: https://pypip.in/wheel/django-cms/badge.svg?style=flat
     :target: https://pypi.python.org/pypi/django-cms/
-.. image:: https://pypip.in/license/django-cms/badge.svg
+.. image:: https://pypip.in/license/django-cms/badge.svg?style=flat
     :target: https://pypi.python.org/pypi/django-cms/
 
 
